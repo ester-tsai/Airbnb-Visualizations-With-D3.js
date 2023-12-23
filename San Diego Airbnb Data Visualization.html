@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://d3js.org/d3.v7.min.js"></script>	
+  <script src="https://unpkg.com/topojson@3.0.2/dist/topojson.min.js"></script>
+  <title>San Diego Airbnb Data Visualizations | Ester Tsai</title>
+</head>
+<body>
+  <h1 id ="main_title">San Diego Airbnb Data Visualizations | Ester Tsai</h1>
+
+  <div id ="plot_map">
+    This map allows the user to explore the differences between different San Diego neighborhoods. Mission Bay has the highest number of Airbnb listings as expected, since Mission Bay is very touristy, with easy access to the ocean and historical sites. There are also high concentrations of listings in the areas around Balboa Park. Personally it is very fun to check out which neighborhoods have the highest mean Airbnb prices. Some of the most expensive neighborhoods are: La Jolla, Mission Bay, Wooded Area, and Sky Line. The oceanside neighborhoods tend to be more expensive, charging more than $300 per night, while the inland ones tend to charge less than $200 per night.<br><br>
+
+    <div id="radio_map" class="center_plot">
+      <input type="radio" id="map_price" name="stat" value="price" checked="checked">
+        <label for="price">Price</label>
+      <input type="radio" id="map_count" name="stat" value="count">
+        <label for="count">Number of Airbnb Listings</label>
+      <input type="radio" id="map_rating" name="stat" value="review_scores_location">
+        <label for="review_scores_location">Location Review Rating</label>
+      <input type="radio" id="map_accommodates" name="stat" value="accommodates">
+        <label for="accommodates">Number of Guests</label>
+    </div>  
+
+    <div id="toggle_map">
+      <label><input type='checkbox' checked="checked"> Show Listing Locations</label>
+    </div>
+
+  </div>
+
+  <hr> 
+
+  <div id ="plot_line">
+    This line plot shows the number of new San Diego Airbnb listings over the years. Since Airbnb was founded in 2008, the first few listings were in 2008. We can see the number of listings skyrocket over the years as Airbnb became more popular. Interestingly enough, the number of new listings took a dip in mid 2019 but continued to go up through the first few years of Covid, despite the lull in traveling. <br><br>
+
+  </div>
+
+  <hr> 
+
+
+  <div id ="plot_scatter">
+    This scatter plot allows the user to visualize trends between price per night and many other quantitative variables such as rating and number of amenities. We see some expected patterns, such as higher number of guests having an association with higher price per night, and less expensive listings tend to receive significantly more reviews. <br><br>
+
+    <div>
+      <label><input type="radio" name="x-axis" value="review_scores_rating" checked> Review Rating</label>
+      <label><input type="radio" name="x-axis" value="number_of_reviews"> Number of Reviews</label>
+      <label><input type="radio" name="x-axis" value="reviews_per_month"> Reviews per Month</label>
+      <label><input type="radio" name="x-axis" value="accommodates"> Accommodates</label>
+      <label><input type="radio" name="x-axis" value="number_of_amenities"> Number of Amenities</label>
+      <label><input type="radio" name="x-axis" value="minimum_nights"> Minimum Nights</label>
+      <label><input type="radio" name="x-axis" value="availability_365"> Availability 365</label>
+    </div>
+  </div>
+
+  <hr> 
+
+  <div id ="plot_box">
+    This box plot provides some insight into the different price distributions of the most popular Airbnb property types. We can see that an entire home has a median price of around $300 per night, while a private room has a median price of around $100 per night.
+
+  </div>
+
+  <hr> 
+
+
+  <div id ="plot_heatmap">
+    This heatmap shows the relationship between rating, number of guests a listing can accommodate, and the price per night. As the number of guests increase, generally so does the price. Higher prices tend to have lower ratings, which makes sense, as higher prices can lead to higher expectations and lower satisfactions. <br><br>
+
+  </div>
+
+  <hr> 
+
+  <h1 id ="end">Thank you for viewing and interacting with my visualizations! - Ester </h1>
+
+  <p>Hope this dashboard allowed you to learn something new about the San Diego Airbnbs. Maybe you found out that the average rating in the Allied Gardens neighborhood is unsually low. Maybe you didn't know that San Diego had very few new listings every year until 2015. Or maybe you learned for the first time that Airbnb has so much data available to the public! In any case, hope you enjoyed these visualizations!</p>
+
+  <script> // DATA: http://insideairbnb.com/get-the-data/
+
+  var parseDate = d3.timeParse("%Y-%m-%d");
+
+  var rowConverter = function(d){ 
+      return {
+          accommodates : +d.accommodates,        
+          availability_365 : +d.availability_365,
+          bathrooms : +d.bathrooms,
+          bedrooms : +d.bedrooms,
+          beds : +d.beds,
+          first_review_year : +d.first_review_year,
+          host_acceptance_rate : +d.host_acceptance_rate,
+          host_response_rate : +d.host_response_rate,
+          host_total_listings_count : +d.host_total_listings_count,
+          latitude : +d.latitude,
+          longitude : +d.longitude,
+          maximum_nights : +d.maximum_nights,
+          minimum_nights : +d.minimum_nights,
+          number_of_amenities : +d.number_of_amenities,
+          number_of_reviews : +d.number_of_reviews,
+          number_of_reviews_ltm : +d.number_of_reviews_ltm,
+          price : +d.price,
+          review_scores_accuracy : +d.review_scores_accuracy,
+          review_scores_checkin : +d.review_scores_checkin,
+          review_scores_cleanliness : +d.review_scores_cleanliness,
+          review_scores_communication : +d.review_scores_communication,
+          review_scores_location : +d.review_scores_location,
+          review_scores_rating : +d.review_scores_rating,
+          review_scores_value : +d.review_scores_value,
+          reviews_per_month : +d.reviews_per_month,
+          has_host_description : d.has_host_description == "True",
+          host_has_profile_pic : d.host_has_profile_pic == "True",
+          host_identity_verified : d.host_identity_verified == "True",
+          host_is_superhost : d.host_is_superhost == "True",
+          instant_bookable : d.instant_bookable == "True",
+          host_since: parseDate(d.host_since),
+          first_review: parseDate(d.first_review),
+          last_review: parseDate(d.last_review),
+          description: d.description,
+          host_id: d.host_id,
+          host_name: d.host_name,
+          host_neighbourhood: d.host_neighbourhood,
+          host_response_time: d.host_response_time,
+          id: d.id,
+          neighborhood: d.neighborhood,
+          property_type: d.property_type,
+          review_scores_rating_categorized: d.review_scores_rating_categorized,
+          room_type: d.room_type
+      }
+  }
+
+  d3.csv("listings_cleaned.csv", rowConverter).then(function(data) {
+
+
+// -------------- General helper variables and functions  ------------------------------------------------------------------------------- 
+
+    function update_groupby_neighborhood(col) {
+      var groupby_neighborhood = d3.rollup(data,
+        v => d3.mean(v, d => d[col]), 
+        d => d.neighborhood
+      );
+
+      // var neighborhood_stat = Array.from(groupby_neighborhood, ([key, value]) => ({ neighborhood: key, stat: value }));
+      return groupby_neighborhood 
+    }
+
+// -------------- Plot 1 - Map ---------------------------------------------------------------------------------------------------------- 
+
+    var margin_map = {top: 20, right: 10, bottom: 10, left: 10};
+    var width_map = 700 - margin_map.left - margin_map.right;
+    var height_map = 900 - margin_map.top - margin_map.bottom;
+
+    var svg_map = d3.select("#plot_map")
+      .append("svg")
+        .attr("width", width_map + margin_map.left + margin_map.right)
+        .attr("height", height_map + margin_map.top + margin_map.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin_map.left + "," + margin_map.top + ")");
+
+    var projection = d3.geoMercator() 
+        .center([-117.16, 32.82])  // [-117.16, 32.72]
+        .scale(70000)  
+        .translate([width_map / 2, height_map / 2]);
+
+    var path = d3.geoPath().projection(projection);
+
+    d3.json("neighbourhoods.geojson").then(function(map) {
+
+      var current_stat = 'price';
+      var neighborhood_stat = update_groupby_neighborhood(current_stat)
+      var stat_extent = d3.extent(neighborhood_stat, d => d[1]);
+
+      var colorScheme = d3.scaleOrdinal()
+        .domain(['price', 'count', 'review_scores_location', 'accommodates'])
+        .range(['DarkCyan', 'crimson', 'goldenrod', 'purple']) //'DarkCyan', 'crimson', 'goldenrod', 'purple'
+
+      var colorScale = d3.scaleLinear()
+        .domain(stat_extent)
+        .range(['Snow', colorScheme(current_stat)]);
+
+      // Map Tooltip
+
+      var tooltip = d3.select("#plot_map")
+          .append("div")
+          .attr("class", "tooltip")
+          .style("opacity", 0)
+          .style("position", "absolute")
+          .style("text-align", "center")
+          .style("width", "fit-content")
+          .style("height", "fit-content")
+          .style("padding", "5px")
+          .style("background", "white")
+          .style("pointer-events", "none")
+          .style("white-space", "pre-line");
+
+      var tooltip_text = d3.scaleOrdinal()
+        .domain(['price', 'count', 'review_scores_location', 'accommodates'])
+        .range(['Price', 'Number of Airbnb Listings', 'Location Review Rating', 'Number of Guests'])
+
+      // Map Plot Title
+
+      function update_map_plot_title() {
+        svg_map.append("text")
+          .attr("x", 20)
+          .attr("y", 30)
+          .attr("text-anchor", "left")
+          .attr("id", "map_plot_title")
+          .style("font-size", "22px")
+          .text(`San Diego Neighborhood Airbnb Stats:`)
+          .append("tspan")
+          .attr("x", 20)
+          .attr("dy", "1.5em")
+          .text(`Average ${tooltip_text(current_stat)}`);
+      }
+
+      update_map_plot_title();
+
+      // Map Legend
+
+      function update_map_legend() {
+          let num_chunks = 5;
+          let extent_range = stat_extent[1] - stat_extent[0];
+          let step = extent_range / (num_chunks - 1);
+          let legend_array_before_rounding = d3.range(stat_extent[0], stat_extent[1] + step, step);
+          let legend_array = legend_array_before_rounding.map(d => d3.format(".1f")(d));
+          let legend_texts = legend_array.map((d, i) => {
+              if (i == 0) {
+                  return `${legend_array[i]} or below`;
+              } else if (i == num_chunks) {
+                  return `${legend_array[i]} or above`;
+              } else {
+                  return `${legend_array[i - 1]} - ${legend_array[i]}`;
+          }});
+
+          var legend = svg_map.append("g")
+              .attr("transform", `translate(${margin_map.left * 5}, ${100})`)
+              .attr("id", "map_legend");
+
+          legend.selectAll("rect")
+              .data(legend_array)
+              .enter()
+              .append("rect")
+              .attr("x", 0)
+              .attr("y", (d, i) => i * 23)
+              .transition()
+              .duration(700)
+              .attr("width", 18)
+              .attr("height", 18)
+              .attr("fill", (d, i) => colorScale(legend_array[i])) 
+              .attr("stroke", "black")
+              .attr("stroke-width", 1);
+
+          legend.selectAll("text")
+              .data(legend_array)
+              .enter()
+              .append("text")
+              .attr("x", 26)
+              .attr("y", (d, i) => i * 23 + 14)
+              .style("font-size", "15px")
+              .text((d, i) => legend_texts[i]);
+      }
+      
+      update_map_legend(stat_extent);
+      
+      // Map 
+
+      svg_map.selectAll("path")
+        .data(map.features)
+        .enter()
+        .append("path")
+          .attr("d", path)
+          .style("fill", d => colorScale(neighborhood_stat.get(d.properties.neighbourhood))) 
+          .style("stroke", "black")
+          .style("stroke-width", 1)
+        .on("mouseover", function(event, d) {
+            d3.select(this).style("stroke", "black").style("stroke-width", 2.5);
+            tooltip.text(`Neighborhood: ${d.properties.neighbourhood}\nMean ${tooltip_text(current_stat)}: ${neighborhood_stat.get(d.properties.neighbourhood)}`)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 10) + "px")
+                .style("opacity", 1);
+        })
+        .on("mousemove", function(event) {
+            tooltip.style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 10) + "px");
+        })
+        .on("mouseout", function(d) {
+            d3.select(this).style("stroke", "black").style("stroke-width", 1);
+            tooltip.style("opacity", 0);
+        }); 
+
+
+      // Button Interactivity
+
+      var radio_map = d3.select('#radio_map')
+        .attr('name', 'stat').on("change", function (d) {
+                current_stat = d.target.value; //getting the value of selected radio button
+
+                if (current_stat == 'count') {
+                    neighborhood_stat = d3.rollup(data,
+                      v => v.length, 
+                      d => d.neighborhood
+                    );
+                }
+                else {
+                    neighborhood_stat = update_groupby_neighborhood(current_stat); 
+                }
+
+                d3.select("#map_plot_title").remove();
+                update_map_plot_title();
+
+                stat_extent = d3.extent(neighborhood_stat, d => d[1]);
+                
+                colorScale = d3.scaleLinear()
+                  .domain(stat_extent)
+                  .range(['Snow', colorScheme(current_stat)]);
+
+                d3.select("#map_legend").remove();
+                update_map_legend();
+
+                svg_map.selectAll("path")
+                  .data(map.features)
+                  .transition()
+                  .duration(700)
+                  .style("fill", d => colorScale(neighborhood_stat.get(d.properties.neighbourhood)));
+        });
+
+      
+      // Show Listing Locations
+
+      svg_map.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", d => projection([d.longitude, d.latitude])[0])
+        .attr("cy", d => projection([d.longitude, d.latitude])[1])
+        .attr("r", 0.5)
+        .attr("fill", "crimson")
+        .attr("opacity", 0.8);
+
+      d3.select("#toggle_map input")
+          .on("change", function() {
+            if (this.checked) {
+              svg_map.selectAll("circle")
+                .transition()
+                .duration(700)
+                .attr("opacity", 0.8)
+            } else {
+              svg_map.selectAll("circle")
+                .transition()
+                .duration(700)
+                .attr("opacity", 0)
+            }
+          });
+    });
+
+
+
+// -------------- Plot 2 - Line Plot -------------------------------------------------------------------------------------------------- 
+    
+    var filter_year = data.filter(d => d.first_review_year != 0);   
+    var groupby_year = d3.rollup(
+        filter_year,
+        v => v.length,
+        d => d.first_review_year
+    );
+    
+    groupby_year = new Map([...groupby_year, [2009, 0]]);
+    var years_sorted = Array.from(groupby_year.keys()).sort();
+    groupby_year_sorted= Array.from(groupby_year, ([year, count]) => ({ year, count })).sort((a, b) => a.year - b.year);
+
+    var margin_line = {top: 20, right: 20, bottom: 100, left: 100};
+    var width_line = 1000 - margin_line.left - margin_line.right;
+    var height_line = 500 - margin_line.top - margin_line.bottom;
+
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          svg_line.selectAll("path")
+            .transition()
+            .duration(2000)
+            .attrTween("stroke-dasharray", function() {
+              const len = this.getTotalLength();
+              return d3.interpolate(`0,${len}`, `${len},${len}`);
+            });
+        }
+      });
+    });
+
+  const chartContainer = d3.select("#plot_line");
+  const svg_line = chartContainer
+    .append("svg")
+    .attr("width", width_line + margin_line.left + margin_line.right)
+    .attr("height", height_line + margin_line.top + margin_line.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin_line.left + "," + margin_line.top + ")");
+
+  // Line Plot X and Y Axes
+
+  var xScale_line = d3.scaleBand()
+      .domain(years_sorted)
+      .range([0, width_line]);
+
+  var yScale_line = d3.scaleLinear()
+      .domain([0, d3.max(groupby_year_sorted, d => d.count)]) 
+      .range([height_line, 0]);
+      
+  svg_line.append("g")
+      .attr("transform", "translate(0," + height_line + ")")
+      .call(d3.axisBottom(xScale_line));
+
+  svg_line.append("g")
+      .call(d3.axisLeft(yScale_line));
+
+  // Plot Line
+  const line = d3.line()
+    .x(d => xScale_line(d.year))
+    .y(d => yScale_line(d.count));
+
+  svg_line.append("path")
+    .data(groupby_year_sorted)
+    .attr("fill", "none")
+    .attr("stroke", "crimson")
+    .attr("stroke-width", 2)
+    .attr("stroke-dasharray", function() {
+      const len = this.getTotalLength();
+      return `${len},${len}`;
+    })
+    .attr("d", line(groupby_year_sorted));
+
+  observer.observe(chartContainer.node());
+
+  // Line Plot Title
+
+  svg_line.append("text")
+    .attr("x", (width_line / 2))
+    .attr("y", 0)
+    .attr("text-anchor", "middle")
+    .style("font-size", "22px")
+    .text("Number of New San Diego Airbnb Listings (2008 - 2022)");
+
+  // Line Plot X and Y Axis Label
+
+  svg_line.append("text")
+    .attr("text-anchor", "middle")
+    .attr("x", width_line/2)
+    .attr("y", height_line + 50)
+    .style("font-size", "17px")
+    .text("Year");
+
+  svg_line.append("text")
+    .attr("text-anchor", "middle")
+    .attr("x", -200)
+    .attr("y", -60)
+    .attr("transform", "rotate(-90)")
+    .text("Number of New Listings");
+
+
+// -------------- Plot 3 - Scatter --------------------------------------------------------------------------------------------------- 
+
+  var margin_scatter = {top: 70, right: 20, bottom: 100, left: 100};
+  var width_scatter = 1000 - margin_scatter.left - margin_scatter.right;
+  var height_scatter = 600 - margin_scatter.top - margin_scatter.bottom;
+
+  var svg_scatter = d3.select("#plot_scatter")
+    .append("svg")
+    .attr("width", width_scatter + margin_scatter.left + margin_scatter.right + 200)
+    .attr("height", height_scatter + margin_scatter.top + margin_scatter.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin_scatter.left + "," + margin_scatter.top + ")");
+
+  // Color Scale
+
+  var colorCode_scatter = "latitude";
+  var colorScale_scatter = d3.scaleSequential(d3.interpolatePlasma)
+    .domain(d3.extent(data, d => d[colorCode_scatter]));
+
+  // X and Y Axes
+
+  var xScale_scatter = d3.scaleLinear()
+    .domain(d3.extent(data, d => d.review_scores_rating))
+    .range([0, width_scatter]);
+
+  var yScale_scatter = d3.scaleLinear()
+    .domain(d3.extent(data, d => d.price)).nice()
+    .range([height_scatter, 0]);
+
+  var xLabel_scatter = svg_scatter.append("text")
+    .attr("text-anchor", "middle")
+    .attr("x", width_scatter/2)
+    .attr("y", height_scatter + 50)
+    .style("font-size", "19px")
+    .text("Review Rating");
+
+  svg_scatter.append("text")
+    .attr("text-anchor", "middle")
+    .attr("x", -220)
+    .attr("y", -50)
+    .style("font-size", "19px")
+    .attr("transform", "rotate(-90)")
+    .text("Price per Night");
+
+  svg_scatter.append("g")
+    .attr("transform", "translate(0," + height_scatter + ")")
+    .attr("id", "x-axis")
+    .call(d3.axisBottom(xScale_scatter));
+
+  svg_scatter.append("g")
+    .call(d3.axisLeft(yScale_scatter));
+
+  // Scatter Plot Title
+
+  svg_scatter.append("text")
+    .attr("x", (width_scatter / 2))
+    .attr("y", -margin_scatter.top/2)
+    .attr("text-anchor", "middle")
+    .style("font-size", "22px")
+    .text("Different Variables' Association With San Diego Airbnb Price");
+
+  // Scatter Plot Legend
+
+  svg_scatter.append("text")
+    .text(`${colorCode_scatter} color code`)
+    .attr("x", width_scatter + 19)
+    .attr("y", 20)
+    .attr("font-size", "20px")
+    .attr("text-anchor", "start");
+
+  var extent = d3.extent(data, d => d.latitude);
+
+  let num_chunks_scatter = 3;
+  let extent_range_scatter = extent[1] - extent[0];
+  let step_scatter = extent_range_scatter / (num_chunks_scatter);
+  let legend_array_before_rounding_scatter = d3.range(extent[1], extent[0], -step_scatter);
+  let legend_array_scatter = legend_array_before_rounding_scatter.map(d => d3.format(".3f")(d));
+  let legend_texts_scatter = legend_array_scatter.map((d, i) => {
+      if (i == 0) {
+          return `North-most (${legend_array_scatter[i]})`;
+      } else if (i == num_chunks_scatter - 1) {
+          return `South-most (${legend_array_scatter[i]})`;
+      } else {
+          return `${legend_array_scatter[i - 1]} to ${legend_array_scatter[i+1]}`;
+  }});
+
+  var legend_scatter = svg_scatter.append("g")
+      .attr("transform", `translate(${width_scatter + 20}, ${30})`);
+
+  legend_scatter.selectAll("rect")
+      .data(legend_array_scatter)
+      .enter()
+      .append("rect")
+      .attr("x", 0)
+      .attr("y", (d, i) => i * 23)
+      .transition()
+      .duration(700)
+      .attr("width", 18)
+      .attr("height", 18)
+      .attr("fill", (d, i) => colorScale_scatter(legend_array_scatter[i])) 
+      .attr("stroke", "black")
+      .attr("stroke-width", 1);
+
+  legend_scatter.selectAll("text")
+      .data(legend_array_scatter)
+      .enter()
+      .append("text")
+      .attr("x", 26)
+      .attr("y", (d, i) => i * 23 + 14)
+      .style("font-size", "15px")
+      .text((d, i) => legend_texts_scatter[i]);
+
+  // Plot Scatter
+
+  svg_scatter.selectAll("circle")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", d => xScale_scatter(d.review_scores_rating))
+    .attr("cy", d => yScale_scatter(d.price))
+    .attr("r", 1.8)
+    .style("fill", d => colorScale_scatter(d[colorCode_scatter]))
+    .style("opacity", 1);
+
+
+    var xKeys = {
+        review_scores_rating: "Review Rating",
+        number_of_reviews: "Number of Reviews",
+        minimum_nights: "Minimum Nights",
+        reviews_per_month: "Reviews per Month",
+        accommodates: "Accommodates",
+        availability_365: "Availability 365",
+        number_of_amenities: "Number of Amenities"
+    };
+
+    var radioButtons = document.getElementsByName("x-axis");
+    radioButtons.forEach(function(radioButton) {
+      radioButton.addEventListener("change", function() {
+
+        // Update X-Axis
+        var selectedXKey = this.value;
+        xScale_scatter.domain(d3.extent(data, d => d[selectedXKey])).nice();
+
+        // Update X-axis Label
+        xLabel_scatter.text(xKeys[selectedXKey]);
+        svg_scatter.select("#x-axis").call(d3.axisBottom(xScale_scatter));
+
+        // Update Scatter Plot
+        svg_scatter.selectAll("circle")
+          .transition()
+          .duration(600)
+          .attr("cx", d => xScale_scatter(d[selectedXKey])); 
+
+      });
+    });
+
+
+// -------------- Plot 4 - Box Plot ---------------------------------------------------------------------------------------------------------- 
+
+  var property_types = ["Entire home", "Entire rental unit", "Private room in home", "Room in hotel"];
+  var box_data = data.filter(d => property_types.includes(d.property_type));
+
+  var margin_box = {top: 70, right: 20, bottom: 100, left: 100};
+  var width_box = 1000 - margin_box.left - margin_box.right;
+  var height_box = 600 - margin_box.top - margin_box.bottom;
+
+  var svg_box = d3.select("#plot_box")
+    .append("svg")
+    .attr("width", width_box + margin_box.left + margin_box.right)
+    .attr("height", height_box + margin_box.top + margin_box.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin_box.left + "," + margin_box.top + ")");
+
+  // Box Plot Color
+  
+  var colorScale_box = d3.scaleOrdinal()
+    .domain(property_types)
+    .range(d3.schemeCategory10);
+
+  // Box Plot X and Y Axes
+
+  var xScale_box = d3.scaleBand()
+    .domain(property_types)
+    .range([0, width_box])
+    .paddingInner(0.1)
+    .paddingOuter(0.1);
+
+  var yScale_box = d3.scaleLinear()
+    .domain(d3.extent(box_data, d => d.price))
+    .range([height_box, 0]);
+
+  var xAxis_box = d3.axisBottom(xScale_box);
+  var yAxis_box = d3.axisLeft(yScale_box);
+
+  svg_box.append("g")
+    .attr("class", "x-axis")
+    .attr("transform", "translate(0," + height_box + ")")
+    .call(xAxis_box)
+    .selectAll("text")
+    .style("text-anchor", "middle")
+    .attr("font-size", "16px");
+
+  svg_box.append("g")
+    .attr("class", "y-axis")
+    .call(yAxis_box);
+
+  svg_box.append("text")
+    .attr("class", "x label")
+    .attr("text-anchor", "middle")
+    .attr("x", width_box / 2)
+    .attr("y", height_box + margin_box.bottom / 2)
+    .text("Property Type")
+    .style("font-size", "19px");
+
+  svg_box.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 0 - margin_box.left / 2)
+    .attr("x", 0 - (height_box / 2))
+    .style("text-anchor", "middle")
+    .text("Price per Night")
+    .style("font-size", "18px");
+
+  // Box Plot Title
+
+  svg_box.append("text")
+    .attr("x", (width_box / 2))
+    .attr("y", 0 - (margin_box.top / 2))
+    .attr("text-anchor", "middle")
+    .text("San Diego Airbnb Price vs. Property Type")
+    .style("font-size", "23px");
+
+  // Box Plot Data
+
+  var boxPlotData = [];
+  property_types.forEach(function(property_type) {
+    var propertyTypeData = box_data.filter(d => d.property_type === property_type);
+    var price = propertyTypeData.map(d => d.price);
+    var q1 = d3.quantile(price, 0.25);
+    var q2 = d3.quantile(price, 0.5);
+    var q3 = d3.quantile(price, 0.75);
+    var iqr = q3 - q1;
+    var max = d3.max(price);
+    var min = d3.min(price); // q1 - 1.5 * iqr
+
+    boxPlotData.push({
+      property_type: property_type,
+      price: price,
+      q1: q1,
+      q2: q2,
+      q3: q3,
+      iqr: iqr,
+      max: max,
+      min: min
+    });
+  });
+
+
+  svg_box.selectAll(".box")
+    .data(boxPlotData)
+    .enter()
+    .append("g")
+    .attr("class", "box")
+    .attr("transform", d => "translate(" + xScale_box(d.property_type) + ",0)")
+    .each(function(d) {
+      // Whiskers
+      d3.select(this).append("line")
+        .attr("x1", xScale_box.bandwidth() / 2)
+        .attr("y1", yScale_box(d.min))
+        .attr("x2", xScale_box.bandwidth() / 2)
+        .attr("y2", yScale_box(d.max))
+        .attr("stroke", "black");
+      
+      // Box
+      d3.select(this).append("rect")
+        .attr("x", xScale_box.bandwidth() / 4)
+        .attr("y", yScale_box(d.q3))
+        .attr("width", xScale_box.bandwidth() / 2)
+        .attr("height", yScale_box(d.q1) - yScale_box(d.q3))
+        .attr("fill", colorScale_box(d.property_type));
+      
+      // Lower Whisker
+      d3.select(this).append("line")
+        .attr("class", "whisker")
+        .attr("x1", xScale_box.bandwidth() / 4)
+        .attr("y1", yScale_box(d.min))
+        .attr("x2", xScale_box.bandwidth() * 3 / 4)
+        .attr("y2", yScale_box(d.min))
+        .attr("stroke", "black")
+        .attr("stroke-width", 2);
+      
+      // Upper Whisker
+      d3.select(this).append("line")
+        .attr("x1", xScale_box.bandwidth() / 4)
+        .attr("y1", yScale_box(d.max))
+        .attr("x2", xScale_box.bandwidth() * 3 / 4)
+        .attr("y2", yScale_box(d.max))
+        .attr("stroke", "black")
+        .attr("stroke-width", 2);
+
+      // Median line
+      d3.select(this).append("line")
+        .attr("x1", xScale_box.bandwidth() / 4)
+        .attr("y1", yScale_box(d.q2))
+        .attr("x2", xScale_box.bandwidth() * 3 / 4)
+        .attr("y2", yScale_box(d.q2))
+        .attr("stroke", "black")
+        .attr("stroke-width", 2);
+    
+  });
+
+
+
+
+// -------------- Plot 5 - Heatmap ----------------------------------------------------------------------------------------------------- 
+
+
+  var width_heat = 900;
+  var height_heat = 700;
+  var margin_heat = {
+      top: 80, bottom: 120, left: 130, right: 10
+  }
+
+  var svg_heat = d3.select("#plot_heatmap")
+      .append("svg")
+      .attr("width", width_heat)
+      .attr("height", height_heat);
+
+
+  var groupby_rating_accommodates = d3.rollup(data, 
+      v => d3.mean(v, d => d.price), 
+      d => d.review_scores_rating_categorized, 
+      d => d.accommodates);
+
+  var rating_categories = ["below 3 stars", "3 to 4 stars", "4 to 4.5 stars", "4.5 to 4.8 stars", "4.8 to 5 stars", "5 stars"];
+  var accommodates_sorted = Array.from(new Set(data.map(d => d.accommodates))).sort(d3.descending);
+
+  // flatten
+  var flatten_rating_accommodates = [];
+  for (const rating of rating_categories) {
+      for (const accommodates of accommodates_sorted) {
+          const mean_price = groupby_rating_accommodates.get(rating).get(accommodates) || 0;
+          flatten_rating_accommodates.push({rating: rating, accommodates: accommodates, mean_price: mean_price});
+      }
+  }
+
+  var xScale_heat = d3.scaleBand()
+      .domain(rating_categories)
+      .range([margin_heat.left, width_heat - margin_heat.right]);
+
+  var yScale_heat = d3.scaleBand()
+      .domain(accommodates_sorted)
+      .range([margin_heat.top, height_heat - margin_heat.bottom]);
+
+
+  var colorScale_heat = d3.scaleLinear()
+      .domain([0, d3.max(flatten_rating_accommodates, d => d.mean_price)])
+      .range(['#FFFAF0', 'darkcyan']); // ffe6ea // #4d004d
+
+
+  var tooltip_heat = d3.select("#plot_heatmap")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0)
+      .style("position", "absolute")
+      .style("text-align", "center")
+      .style("width", "fit-content")
+      .style("height", "fit-content")
+      .style("padding", "5px")
+      .style("background", "white")
+      .style("pointer-events", "none")
+      .style("white-space", "pre-line");
+
+  // heatmap cells
+  var spacing_heat = 5;
+  svg_heat.selectAll("rect")
+      .data(flatten_rating_accommodates)
+      .enter()
+      .append("rect")
+      .attr("x", d => xScale_heat(d.rating)) 
+      .attr("y", d => yScale_heat(d.accommodates))
+      .attr("width", xScale_heat.bandwidth() - spacing_heat)
+      .attr("height", yScale_heat.bandwidth() - spacing_heat)
+      .attr("fill", d => colorScale_heat(d.mean_price))
+      .on("mouseover", function(event, d) {
+          d3.select(this).attr("stroke", "black").attr("stroke-width", 2);
+          tooltip_heat.text("Mean Price: " + d.mean_price)
+              .style("left", (event.pageX + 10) + "px")
+              .style("top", (event.pageY - 10) + "px")
+              .style("opacity", 1);
+      })
+      .on("mousemove", function(event) {
+          tooltip_heat.style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 10) + "px");
+      })
+      .on("mouseout", function(d) {
+          d3.select(this).attr("stroke", "none");
+          tooltip_heat.style("opacity", 0);
+      }); 
+
+  // X-Axis
+  var xAxis_heat = d3.axisBottom(xScale_heat);
+  svg_heat.append("g")
+      .attr("transform", "translate(0," + (height_heat - margin_heat.bottom) + ")")
+      .call(xAxis_heat)
+      .selectAll("text")
+      .attr("font-size", "15px");
+
+  // hide the axis line
+  svg_heat.select(".domain")
+      .remove(); 
+  
+  // hide the ticks
+  svg_heat.selectAll(".tick line")
+      .style("display", "none");
+
+  // X-Axis Label
+  svg_heat.append("text")
+      .attr("x", width_heat / 2 + 45)
+      .attr("y", height_heat - margin_heat.bottom / 2)
+      .attr("font-size", "18px")
+      .text("Rating");
+
+  // Y-Axis
+  var yAxis_heat = d3.axisLeft(yScale_heat);
+  svg_heat.append("g")
+      .attr("transform", "translate(" + margin_heat.left + ",0)")
+      .call(yAxis_heat)
+      .selectAll("text")
+      .attr("font-size", "16px");
+  
+  // hide the axis line
+  svg_heat.select(".domain")
+      .remove(); 
+  
+  // hide the ticks
+  svg_heat.selectAll(".tick line")
+      .style("display", "none");
+
+  // Y-Axis Label
+  svg_heat.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", margin_heat.left / 1.5)
+    .attr("x", 0 - height_heat / 2 - 40)
+    .text("Number of Guests")
+    .style("font-size", "18px");
+
+  // Heatmap Plot Title
+    svg_heat.append("text")
+    .attr("x", width_heat / 2 + 45)
+    .attr("y", margin_heat.top/2)
+    .attr("text-anchor", "middle")
+    .style("font-size", "22px")
+    .text("Mean Price Based on Rating and Number of Guests");
+ 
+
+
+  });
+
+  </script>
+</body>
+</html>
