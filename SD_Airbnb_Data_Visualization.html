@@ -299,7 +299,7 @@
           .style("stroke-width", 1)
         .on("mouseover", function(event, d) {
             d3.select(this).style("stroke", "black").style("stroke-width", 2.5);
-            tooltip.text(`Neighborhood: ${d.properties.neighbourhood}\nMean ${tooltip_text(current_stat)}: ${neighborhood_stat.get(d.properties.neighbourhood)}`)
+            tooltip.text(`Neighborhood: ${d.properties.neighbourhood}\nMean ${tooltip_text(current_stat)}: ${neighborhood_stat.get(d.properties.neighbourhood).toFixed(3)}`)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 10) + "px")
                 .style("opacity", 1);
@@ -866,7 +866,7 @@
       .attr("fill", d => colorScale_heat(d.mean_price))
       .on("mouseover", function(event, d) {
           d3.select(this).attr("stroke", "black").attr("stroke-width", 2);
-          tooltip_heat.text("Mean Price: " + d.mean_price)
+          tooltip_heat.text("Mean Price: $" + d.mean_price.toFixed(2))
               .style("left", (event.pageX + 10) + "px")
               .style("top", (event.pageY - 10) + "px")
               .style("opacity", 1);
@@ -933,7 +933,7 @@
     .attr("y", margin_heat.top/2)
     .attr("text-anchor", "middle")
     .style("font-size", "22px")
-    .text("Mean Price Based on Rating and Number of Guests");
+    .text("Mean Price Per Night Based on Rating and Number of Guests");
  
 
 
